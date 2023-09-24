@@ -21,5 +21,13 @@ namespace SignalRExample.Controllers
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", message.User, message.Text);
             return Ok();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> SendMessageUser([FromBody] Message message)
+        {
+            await _hubContext.Clients.All.SendAsync("SendChatMessage", message.User, message.Text);
+            
+            return Ok();
+        }
     }
 }
