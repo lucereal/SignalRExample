@@ -21,21 +21,9 @@ namespace SignalRServiceExample
             _logger = loggerFactory.CreateLogger<Function1>();
         }
 
-        [Function("Function1")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req)
-        {
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-
-            response.WriteString("Welcome to Azure Functions!");
-
-            return response;
-        }
-
-        [Function("index")]
-        public static HttpResponseData GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req)
+        [Function("indexStar")]
+        public static HttpResponseData GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous, Route = "star/index")] HttpRequestData req)
         {
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString(File.ReadAllText("content/index.html"));
@@ -43,8 +31,8 @@ namespace SignalRServiceExample
             return response;
         }
 
-        [Function("negotiate")]
-        public static HttpResponseData Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req,
+        [Function("negotiateStar")]
+        public static HttpResponseData Negotiate([HttpTrigger(AuthorizationLevel.Anonymous, Route = "star/negotiate")] HttpRequestData req,
         [SignalRConnectionInfoInput(HubName = "serverless")] string connectionInfo)
         {
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -53,7 +41,7 @@ namespace SignalRServiceExample
             return response;
         }
 
-        [Function("broadcast")]
+        [Function("broadcastStar")]
         [SignalROutput(HubName = "serverless")]
         public static async Task<SignalRMessageAction> Broadcast([TimerTrigger("*/5 * * * * *")] TimerInfo timerInfo)
         {
@@ -78,12 +66,12 @@ namespace SignalRServiceExample
             return new SignalRMessageAction("newMessage", new object[] { $"Current star count of https://github.com/Azure/azure-signalr is: {StarCount}" });
         }
 
-       
-
         private class GitResult
         {
             [JsonPropertyName("stargazers_count")]
             public int StarCount { get; set; }
         }
+
+       
     }
 }

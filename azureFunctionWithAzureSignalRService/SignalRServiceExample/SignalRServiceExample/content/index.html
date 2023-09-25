@@ -8,7 +8,7 @@
     let messages = document.querySelector('#messages');
     const apiBaseUrl = window.location.origin;
     const connection = new signalR.HubConnectionBuilder()
-        .withUrl(apiBaseUrl + '/api')
+        .withUrl(apiBaseUrl + '/api/star')
         .configureLogging(signalR.LogLevel.Information)
         .build();
       connection.on('newMessage', (message) => {
