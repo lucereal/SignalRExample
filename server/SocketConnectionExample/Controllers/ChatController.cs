@@ -16,6 +16,7 @@ namespace SignalRExample.Controllers
         }
 
         [HttpPost]
+        [Route("/v")]
         public async Task<IActionResult> SendMessage([FromBody] Message message)
         {
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", message.User, message.Text);
@@ -23,10 +24,21 @@ namespace SignalRExample.Controllers
         }
 
         [HttpPost]
+        [Route("/s")]
         public async Task<IActionResult> SendMessageUser([FromBody] Message message)
         {
             await _hubContext.Clients.All.SendAsync("SendChatMessage", message.User, message.Text);
             
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("/group")]
+        public async Task<IActionResult> SendMessageToGroup([FromBody] Message message)
+        {
+            await _hubContext.Clients.Group(message.Group).SendAsync("GroupUpdate", message.Text);
+           // await _hubContext.Clients.All.SendAsync("SendChatMessage", message.Group, message.Text);
+
             return Ok();
         }
     }
