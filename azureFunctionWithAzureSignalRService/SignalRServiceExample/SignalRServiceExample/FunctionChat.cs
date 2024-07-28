@@ -1,6 +1,8 @@
 ﻿using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker;
+
 using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,10 +32,23 @@ namespace SignalRServiceExample
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString(File.ReadAllText("content/indexchat.html"));
             response.Headers.Add("Content-Type", "text/html");
+
             return response;
         }
 
+        [Function("foo")]
+        [SignalROutput(HubName = "Hub")]
+        public SignalRMessageAction foo([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req)
+        {
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString(File.ReadAllText("content/indexchat.html"));
+            response.Headers.Add("Content-Type", "text/html");
+            return new SignalRMessageAction("newMessage", new object[] { "hello" });
+
+        }
+
         [Function("Negotiate")]
+
         public SignalRConnectionInfo Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req,
             [SignalRConnectionInfoInput(HubName = "Hub", UserId = "{query.userid}")] SignalRConnectionInfo signalRConnectionInfo)
         {
@@ -42,6 +57,7 @@ namespace SignalRServiceExample
             _logger.LogInformation("Executing negotiation.");
             return signalRConnectionInfo;
         }
+
 
         [Function("OnConnected")]
         [SignalROutput(HubName = "Hub")]
@@ -56,99 +72,29 @@ namespace SignalRServiceExample
             };
         }
 
-        [Function("Broadcast")]
+
+        [Function(nameof(Broadcast))]
         [SignalROutput(HubName = "Hub")]
-        public SignalRMessageAction Broadcast([SignalRTrigger("Hub", "messages", "Broadcast", "message")] SignalRInvocationContext invocationContext, string message)
+        public static SignalRMessageAction Broadcast([SignalRTrigger("Hub", "messages", "fish", "message", ConnectionStringSetting = "AzureSignalRConnectionString")] 
+        SignalRInvocationContext invocationContext, string message, FunctionContext functionContext)
         {
             return new SignalRMessageAction("newMessage")
             {
-                Arguments = new object[] { new NewMessage(invocationContext, message) }
+                Arguments = new object[] { "FKdjflkajd" }
             };
         }
 
-        [Function("SendToGroup")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRMessageAction SendToGroup([SignalRTrigger("Hub", "messages", "SendToGroup", "groupName", "message")] SignalRInvocationContext invocationContext, string groupName, string message)
-        {
-            return new SignalRMessageAction("newMessage")
-            {
-                GroupName = groupName,
-                Arguments = new object[] { new NewMessage(invocationContext, message) }
-            };
-        }
 
-        [Function("SendToUser")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRMessageAction SendToUser([SignalRTrigger("Hub", "messages", "SendToUser", "userName", "message")] SignalRInvocationContext invocationContext, string userName, string message)
-        {
-            return new SignalRMessageAction("newMessage")
-            {
-                UserId = userName,
-                Arguments = new object[] { new NewMessage(invocationContext, message) }
-            };
-        }
+    //    [Function(nameof(OnClientMessage))]
+    //    public static void OnClientMessage(
+    //[SignalRTrigger("Hub", "messages", "sendMessage", "content", ConnectionStringSetting = "SignalRConnection")]
+    //    SignalRInvocationContext invocationContext, string content, FunctionContext functionContext)
+    //    {
+    //        var logger = functionContext.GetLogger(nameof(OnClientMessage));
+    //        logger.LogInformation("Connection {connectionId} sent a message. Message content: {content}", invocationContext.ConnectionId, content);
+    //    }
 
-        [Function("SendToConnection")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRMessageAction SendToConnection([SignalRTrigger("Hub", "messages", "SendToConnection", "connectionId", "message")] SignalRInvocationContext invocationContext, string connectionId, string message)
-        {
-            return new SignalRMessageAction("newMessage")
-            {
-                ConnectionId = connectionId,
-                Arguments = new object[] { new NewMessage(invocationContext, message) }
-            };
-        }
 
-        [Function("JoinGroup")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRGroupAction JoinGroup([SignalRTrigger("Hub", "messages", "JoinGroup", "connectionId", "groupName")] SignalRInvocationContext invocationContext, string connectionId, string groupName)
-        {
-            return new SignalRGroupAction(SignalRGroupActionType.Add)
-            {
-                GroupName = groupName,
-                ConnectionId = connectionId
-            };
-        }
-
-        [Function("LeaveGroup")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRGroupAction LeaveGroup([SignalRTrigger("Hub", "messages", "LeaveGroup", "connectionId", "groupName")] SignalRInvocationContext invocationContext, string connectionId, string groupName)
-        {
-            return new SignalRGroupAction(SignalRGroupActionType.Remove)
-            {
-                GroupName = groupName,
-                ConnectionId = connectionId
-            };
-        }
-
-        [Function("JoinUserToGroup")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRGroupAction JoinUserToGroup([SignalRTrigger("Hub", "messages", "JoinUserToGroup", "userName", "groupName")] SignalRInvocationContext invocationContext, string userName, string groupName)
-        {
-            return new SignalRGroupAction(SignalRGroupActionType.Add)
-            {
-                GroupName = groupName,
-                UserId = userName
-            };
-        }
-
-        [Function("LeaveUserFromGroup")]
-        [SignalROutput(HubName = "Hub")]
-        public SignalRGroupAction LeaveUserFromGroup([SignalRTrigger("Hub", "messages", "LeaveUserFromGroup", "userName", "groupName")] SignalRInvocationContext invocationContext, string userName, string groupName)
-        {
-            return new SignalRGroupAction(SignalRGroupActionType.Remove)
-            {
-                GroupName = groupName,
-                UserId = userName
-            };
-        }
-
-        [Function("OnDisconnected")]
-        [SignalROutput(HubName = "Hub")]
-        public void OnDisconnected([SignalRTrigger("Hub", "connections", "disconnected")] SignalRInvocationContext invocationContext)
-        {
-            _logger.LogInformation($"{invocationContext.ConnectionId} has disconnected");
-        }
 
         public class NewConnection
         {
